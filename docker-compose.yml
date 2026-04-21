@@ -1,0 +1,286 @@
+# =============================================================================
+# REAL-TIME WEB INDEXING SYSTEM — Docker Compose
+# PRN: 22510103
+#
+# Usage:
+#   docker compose up -d                  → start all services
+#   docker compose up -d redis minio postgres meilisearch qdrant
+#                                         → start infrastructure only
+#   docker compose logs -f discovery      → tail a single service
+#   docker compose down -v                → stop + wipe volumes
+# =============================================================================
+
+version: "3.9"
+
+# ── Shared network ────────────────────────────────────────────────────────────
+networks:
+  indexer_net:
+    driver: bridge
+
+# ── Named volumes (data persists across restarts) ─────────────────────────────
+volumes:
+  redis_data:
+  minio_data:
+  postgres_data:
+  meilisearch_data:
+  qdrant_data:
+  prometheus_data:
+  grafana_data:
+
+services:
+
+  # ── Infrastructure ───────────────────────────────────────────────────────────
+
+  redis:
+    image: redis/redis-stack:7.2.0-v9          # includes RedisBloom module
+    container_name: indexer_redis
+    ports:
+      - "6379:6379"
+      - "8001:8001"                             # RedisInsight UI
+    volumes:
+      - redis_data:/data
+      - ./infra/redis/redis.conf:/redis-stack.conf
+    command: redis-stack-server /redis-stack.conf
+    networks: [indexer_net]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    container_name: indexer_minio
+    ports:
+      - "9000:9000"                             # S3 API
+      - "9001:9001"                             # MinIO Console UI
+    volumes:
+      - minio_data:/data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_NOTIFY_REDIS_ENABLE_primary: "on"
+      MINIO_NOTIFY_REDIS_ADDR_primary: "redis:6379"
+      MINIO_NOTIFY_REDIS_KEY_primary: "minio_events"
+      MINIO_NOTIFY_REDIS_FORMAT_primary: "access"
+    command: server /data --console-address ":9001"
+    networks: [indexer_net]
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  minio_init:
+    image: minio/mc:latest
+    container_name: indexer_minio_init
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks: [indexer_net]
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set local http://minio:9000 minioadmin minioadmin;
+        mc mb --ignore-existing local/raw-pages;
+        mc mb --ignore-existing local/processed;
+        echo 'MinIO buckets ready';
+      "
+    restart: "no"
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: indexer_postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-indexer}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-indexer}
+    networks: [indexer_net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U indexer"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.7
+    container_name: indexer_meilisearch
+    ports:
+      - "7700:7700"
+    volumes:
+      - meilisearch_data:/meili_data
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_API_KEY:-masterKey}
+      MEILI_ENV: development
+      MEILI_LOG_LEVEL: INFO
+    networks: [indexer_net]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.8.4
+    container_name: indexer_qdrant
+    ports:
+      - "6333:6333"                             # REST API
+      - "6334:6334"                             # gRPC
+    volumes:
+      - qdrant_data:/qdrant/storage
+      - ./infra/qdrant/config.yaml:/qdrant/config/production.yaml
+    networks: [indexer_net]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ── Application Services ─────────────────────────────────────────────────────
+
+  discovery:
+    build:
+      context: ./services/discovery
+      dockerfile: Dockerfile
+    container_name: indexer_discovery
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      - SERVICE_NAME=discovery
+    networks: [indexer_net]
+    volumes:
+      - ./services/discovery:/app        # hot-reload in dev
+      - ./shared:/app/shared
+    restart: unless-stopped
+
+  crawler:
+    build:
+      context: ./services/crawler
+      dockerfile: Dockerfile
+    container_name: indexer_crawler
+    depends_on:
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      - SERVICE_NAME=crawler
+    networks: [indexer_net]
+    deploy:
+      replicas: 3                        # 3 crawler instances
+    restart: unless-stopped
+
+  processor:
+    build:
+      context: ./services/processor
+      dockerfile: Dockerfile
+    container_name: indexer_processor
+    depends_on:
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      - SERVICE_NAME=processor
+    networks: [indexer_net]
+    volumes:
+      - ./services/processor:/app
+      - ./shared:/app/shared
+    deploy:
+      replicas: 2
+    restart: unless-stopped
+
+  indexer:
+    build:
+      context: ./services/indexer
+      dockerfile: Dockerfile
+    container_name: indexer_writer
+    depends_on:
+      redis:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      - SERVICE_NAME=indexer
+    networks: [indexer_net]
+    volumes:
+      - ./services/indexer:/app
+      - ./shared:/app/shared
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./services/api
+      dockerfile: Dockerfile
+    container_name: indexer_api
+    ports:
+      - "8000:8000"
+    depends_on:
+      meilisearch:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      - SERVICE_NAME=api
+    networks: [indexer_net]
+    volumes:
+      - ./services/api:/app
+      - ./shared:/app/shared
+    restart: unless-stopped
+
+  # ── Monitoring ───────────────────────────────────────────────────────────────
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: indexer_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+    networks: [indexer_net]
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: indexer_grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infra/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    networks: [indexer_net]
+    depends_on: [prometheus]
+    restart: unless-stopped
