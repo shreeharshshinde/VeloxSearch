@@ -1,0 +1,112 @@
+# Local environment
+.env
+.env.*
+!.env.example
+.python-version
+
+# Local Codex/session metadata
+.codex
+
+# Secrets and credentials
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa*
+id_ed25519*
+service-account*.json
+credentials*.json
+secrets*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.hypothesis/
+.ipynb_checkpoints/
+pip-wheel-metadata/
+*.egg-info/
+.eggs/
+build/
+dist/
+site/
+
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Go
+/bin/
+*.exe
+*.test
+*.out
+coverage.out
+cover.out
+go.work.sum
+
+# Node/tooling caches, in case a dashboard is added
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+
+# Docker and local service data
+docker-compose.override.yml
+*.pid
+*.seed
+/data/
+/logs/
+/tmp/
+/var/
+dump.rdb
+appendonly.aof
+appendonlydir/
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+
+# Generated search/vector/object-store artifacts
+snapshots/
+backups/
+uploads/
+raw-pages/
+models-cache/
+.cache/
+
+# Logs
+*.log
+logs/
+
+# Editor/IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
