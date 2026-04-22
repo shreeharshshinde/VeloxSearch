@@ -1,0 +1,68 @@
+# =============================================================================
+# Prometheus Scrape Configuration
+# PRN: 22510103
+#
+# Scrapes metrics from all services every 15 seconds.
+# Access Prometheus UI at: http://localhost:9090
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    project: 'realtime-indexer'
+    environment: 'development'
+
+# ── Alerting ─────────────────────────────────────────────────────────────────
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['alertmanager:9093']
+
+# ── Scrape targets ────────────────────────────────────────────────────────────
+scrape_configs:
+
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Discovery service
+  - job_name: 'discovery'
+    static_configs:
+      - targets: ['discovery:9101']
+    metrics_path: /metrics
+
+  # Crawler service
+  - job_name: 'crawler'
+    static_configs:
+      - targets: ['crawler:9102']
+    metrics_path: /metrics
+
+  # Processor service
+  - job_name: 'processor'
+    static_configs:
+      - targets: ['processor:9103']
+    metrics_path: /metrics
+
+  # Indexer service
+  - job_name: 'indexer'
+    static_configs:
+      - targets: ['indexer:9104']
+    metrics_path: /metrics
+
+  # API service
+  - job_name: 'api'
+    static_configs:
+      - targets: ['api:9105']
+    metrics_path: /metrics
+
+  # Redis (via redis_exporter — add to docker-compose for production)
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets: ['redis-exporter:9121']
+
+  # PostgreSQL (via postgres_exporter — add for production)
+  # - job_name: 'postgres'
+  #   static_configs:
+  #     - targets: ['postgres-exporter:9187']
