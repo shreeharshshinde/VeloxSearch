@@ -1,0 +1,19 @@
+# Discovery Service Dependencies
+# Install with: pip install -r requirements.txt
+
+# ── Async HTTP ────────────────────────────────────────────────────────────────
+httpx==0.27.0              # async HTTP client for sitemap fetching
+aiohttp==3.9.5             # alternative async HTTP (used in some watchers)
+
+# ── WebSocket ─────────────────────────────────────────────────────────────────
+websockets==12.0           # Certstream WebSocket client
+
+# ── Redis ─────────────────────────────────────────────────────────────────────
+redis[hiredis]==5.0.4      # async Redis client with fast C parser
+
+# ── Monitoring ────────────────────────────────────────────────────────────────
+prometheus-client==0.20.0
+
+# ── Shared (installed from local path) ───────────────────────────────────────
+# The shared/ directory is mounted into the container at /app/shared
+# No pip install needed — it's on the Python path directly
