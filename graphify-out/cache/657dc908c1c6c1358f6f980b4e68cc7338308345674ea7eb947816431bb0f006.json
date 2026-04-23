@@ -1,0 +1,1 @@
+{"nodes": [{"id": "services_indexer_writers_meilisearch_writer_py", "label": "meilisearch_writer.py", "file_type": "code", "source_file": "services/indexer/writers/meilisearch_writer.py", "source_location": "L1"}], "edges": [], "raw_calls": []}

@@ -1,0 +1,16 @@
+README.md
+services/processor/requirements.txt
+services/processor/tests/fixtures/sample_pages/minimal.html
+services/processor/tests/fixtures/sample_pages/article.html
+services/discovery/requirements.txt
+services/indexer/requirements.txt
+services/api/requirements.txt
+services/crawler/playwright_crawler/requirements.txt
+docs/SCALING.md
+docs/ADR.md
+docs/PROJECT_PLAN.md
+docs/API.md
+docs/DECISIONS.md
+docs/phases/PHASE_01_DISCOVERY.md
+docs/phases/PHASE_03_PROCESSOR.md
+docs/phases/PHASE_02_CRAWLER.md

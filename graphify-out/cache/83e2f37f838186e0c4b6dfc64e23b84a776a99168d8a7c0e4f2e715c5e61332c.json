@@ -1,0 +1,1 @@
+{"nodes": [{"id": "services_indexer_writers_postgres_writer_py", "label": "postgres_writer.py", "file_type": "code", "source_file": "services/indexer/writers/postgres_writer.py", "source_location": "L1"}], "edges": [], "raw_calls": []}
