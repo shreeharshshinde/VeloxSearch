@@ -1,0 +1,5 @@
+# Playwright crawler Python dependencies
+playwright==1.43.0
+redis[hiredis]==5.0.4
+minio==7.2.7
+prometheus-client==0.20.0
