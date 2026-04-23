@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>How Machine Learning is Transforming Web Search</title>
+    <meta property="og:title" content="How Machine Learning is Transforming Web Search">
+    <meta property="og:description"
+        content="A deep dive into how modern search engines use neural networks and vector embeddings.">
+    <meta property="og:image" content="https://example.com/images/ml-search.jpg">
+    <meta property="og:type" content="article">
+    <link rel="canonical" href="https://example.com/articles/ml-web-search">
+    <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "How Machine Learning is Transforming Web Search",
+    "author": { "@type": "Person", "name": "Jane Smith" },
+    "datePublished": "2024-01-15T10:00:00Z",
+    "dateModified": "2024-01-15T12:00:00Z",
+    "description": "A deep dive into neural network search",
+    "publisher": {
+      "@type": "Organization",
+      "name": "TechBlog",
+      "logo": { "@type": "ImageObject", "url": "https://example.com/logo.png" }
+    }
+  }
+  </script>
+</head>
+
+<body>
+    <!-- Navigation (boilerplate — should be stripped) -->
+    <nav>
+        <a href="/">Home</a> | <a href="/articles">Articles</a> | <a href="/about">About</a>
+    </nav>
+
+    <!-- Main article content -->
+    <main>
+        <article>
+            <h1>How Machine Learning is Transforming Web Search</h1>
+            <p class="byline">By Jane Smith | January 15, 2024</p>
+
+            <p>
+                The landscape of web search has changed dramatically over the past decade.
+                Traditional keyword-based search engines relied on exact word matching and
+                simple ranking algorithms like TF-IDF and PageRank. Today, companies like
+                Google, Bing, and OpenAI are deploying large language models and vector
+                embedding systems that understand the semantic meaning behind a query.
+            </p>
+
+            <h2>The Rise of Semantic Search</h2>
+            <p>
+                Semantic search goes beyond keyword matching. When you search for
+                "best programming language for data science", a semantic search engine
+                understands that you probably want information about Python, R, Julia,
+                and similar tools — even if your exact query words don't appear in the
+                document.
+            </p>
+            <p>
+                This is achieved through dense vector embeddings — mathematical
+                representations of text in high-dimensional space where semantically
+                similar texts are geometrically close to each other. Models like
+                BERT, RoBERTa, and the sentence-transformers library produce these
+                embeddings efficiently.
+            </p>
+
+            <h2>How It Works in Practice</h2>
+            <p>
+                Modern search systems use a two-stage retrieval approach:
+                first, a fast approximate nearest-neighbour (ANN) search retrieves
+                candidate documents from the vector index; then a more expensive
+                cross-encoder reranks the top candidates for precision.
+            </p>
+            <p>
+                Companies like Pinecone, Weaviate, and Qdrant have built specialised
+                vector databases that can store and search billions of embeddings in
+                milliseconds. These systems use algorithms like HNSW (Hierarchical
+                Navigable Small World) graphs that achieve sub-millisecond query
+                latency at massive scale.
+            </p>
+
+            <h2>Real-Time Indexing Challenges</h2>
+            <p>
+                One of the hardest problems in modern search is real-time indexing.
+                The web publishes millions of new pages every hour. Getting a new page
+                into the search index quickly — within 60 seconds of publication —
+                requires a sophisticated pipeline involving URL discovery via
+                WebSub and certificate transparency logs, distributed crawling,
+                and streaming NLP processing.
+            </p>
+        </article>
+    </main>
+
+    <!-- Sidebar (boilerplate — should be stripped) -->
+    <aside>
+        <h3>Related Articles</h3>
+        <ul>
+            <li><a href="/articles/bert">Understanding BERT</a></li>
+            <li><a href="/articles/qdrant">Qdrant Tutorial</a></li>
+        </ul>
+    </aside>
+
+    <!-- Footer (boilerplate — should be stripped) -->
+    <footer>
+        <p>© 2024 TechBlog. All rights reserved.</p>
+        <a href="/privacy">Privacy Policy</a> | <a href="/terms">Terms of Service</a>
+    </footer>
+</body>
+
+</html>
