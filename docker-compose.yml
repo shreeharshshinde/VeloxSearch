@@ -10,8 +10,6 @@
 #   docker compose down -v                → stop + wipe volumes
 # =============================================================================
 
-version: "3.9"
-
 # ── Shared network ────────────────────────────────────────────────────────────
 networks:
   indexer_net:
@@ -170,7 +168,6 @@ services:
     build:
       context: ./services/crawler
       dockerfile: Dockerfile
-    container_name: indexer_crawler
     depends_on:
       redis:
         condition: service_healthy
@@ -188,7 +185,6 @@ services:
     build:
       context: ./services/processor
       dockerfile: Dockerfile
-    container_name: indexer_processor
     depends_on:
       redis:
         condition: service_healthy
