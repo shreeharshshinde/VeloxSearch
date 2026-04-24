@@ -1,0 +1,77 @@
+{
+    "_comment": "Meilisearch index settings reference for PRN-22510103",
+    "_note": "Applied programmatically by MeilisearchWriter._setup_index() — this file is documentation only",
+    "indexUid": "pages",
+    "primaryKey": "id",
+    "searchableAttributes": [
+        "title",
+        "og_title",
+        "keywords",
+        "clean_text",
+        "og_description",
+        "author",
+        "domain"
+    ],
+    "filterableAttributes": [
+        "domain",
+        "language",
+        "schema_type",
+        "discovery_source",
+        "crawl_depth",
+        "has_embedding"
+    ],
+    "sortableAttributes": [
+        "crawled_at",
+        "freshness_score",
+        "domain_authority",
+        "word_count",
+        "indexed_at"
+    ],
+    "rankingRules": [
+        "words",
+        "typo",
+        "proximity",
+        "attribute",
+        "sort",
+        "exactness"
+    ],
+    "typoTolerance": {
+        "enabled": true,
+        "minWordSizeForTypos": {
+            "oneTypo": 5,
+            "twoTypos": 9
+        }
+    },
+    "pagination": {
+        "maxTotalHits": 1000
+    },
+    "highlightPreTag": "<mark>",
+    "highlightPostTag": "</mark>",
+    "_document_fields": {
+        "id": "string  — SHA-256(url)[:32], primary key",
+        "url": "string  — canonical page URL",
+        "domain": "string  — hostname, e.g. techcrunch.com",
+        "canonical_url": "string  — <link rel=canonical> URL",
+        "title": "string  — page title (highest search weight)",
+        "og_title": "string  — OpenGraph og:title",
+        "keywords": "array   — extracted keyword phrases",
+        "clean_text": "string  — body text (first 10,000 chars)",
+        "og_description": "string  — OpenGraph og:description",
+        "author": "string  — author name",
+        "summary": "string  — first ~300 chars of clean_text",
+        "og_image": "string  — OpenGraph og:image URL",
+        "language": "string  — ISO 639-1 code: en, fr, de ...",
+        "published_at": "string  — ISO 8601 publication date",
+        "schema_type": "string  — Schema.org @type: Article, Product ...",
+        "discovery_source": "string  — websub | sitemap | ct_log | link",
+        "crawl_depth": "number  — link hops from seed (0 = seed)",
+        "has_embedding": "boolean — whether Qdrant has a vector for this doc",
+        "freshness_score": "number  — 0.0–1.0 exponential decay score",
+        "domain_authority": "number  — 0.0–1.0 domain authority score",
+        "word_count": "number  — non-stop-word token count",
+        "crawled_at": "number  — Unix timestamp of crawl",
+        "indexed_at": "number  — Unix timestamp of index write",
+        "entity_names": "array   — extracted entity text values",
+        "entity_types": "array   — unique entity label types"
+    }
+}

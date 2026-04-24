@@ -1,0 +1,109 @@
+{
+    "_comment": "Qdrant collection configuration reference for PRN-22510103",
+    "_note": "Applied programmatically by QdrantWriter._ensure_collection() — this file is documentation only",
+    "collection_name": "pages",
+    "vectors_config": {
+        "size": 384,
+        "distance": "Cosine",
+        "_why_cosine": "Embeddings are L2-normalised. Cosine distance = dot product. Fast and accurate.",
+        "hnsw_config": {
+            "m": 16,
+            "_why_m16": "16 bidirectional links per node. Quality/speed tradeoff. 8=faster, 32=more accurate.",
+            "ef_construct": 100,
+            "_why_ef100": "Candidates explored during build. Higher = better recall. 100 is a solid default.",
+            "full_scan_threshold": 10000,
+            "_why_threshold": "Below 10k vectors, use exact search (faster than HNSW for small collections)"
+        }
+    },
+    "optimizers_config": {
+        "indexing_threshold": 20000,
+        "_why_threshold": "Delay HNSW indexing until segment has 20k vectors. Reduces rebuild frequency.",
+        "default_segment_number": 2,
+        "_why_2_segments": "Parallel write segments during bulk load. Merge after initial load."
+    },
+    "payload_indexes": [
+        {
+            "field": "domain",
+            "type": "keyword",
+            "_why": "Filter by domain before ANN search"
+        },
+        {
+            "field": "language",
+            "type": "keyword",
+            "_why": "Filter by language (lang=en)"
+        },
+        {
+            "field": "schema_type",
+            "type": "keyword",
+            "_why": "Filter by content type (Article etc)"
+        },
+        {
+            "field": "discovery_source",
+            "type": "keyword",
+            "_why": "Analytics and filtering"
+        },
+        {
+            "field": "crawled_at",
+            "type": "float",
+            "_why": "Sort by recency"
+        },
+        {
+            "field": "freshness_score",
+            "type": "float",
+            "_why": "Reranking signal"
+        },
+        {
+            "field": "domain_authority",
+            "type": "float",
+            "_why": "Reranking signal"
+        }
+    ],
+    "_point_schema": {
+        "id": "uint64  — SHA-256(url)[:8] as big-endian uint64",
+        "vector": "float32[384]  — L2-normalised sentence embedding",
+        "payload": {
+            "url": "string — canonical page URL",
+            "domain": "string — hostname",
+            "canonical_url": "string — <link rel=canonical>",
+            "title": "string — page title",
+            "og_title": "string — og:title",
+            "summary": "string — first ~300 chars",
+            "og_description": "string — og:description",
+            "og_image": "string — og:image URL",
+            "author": "string — author name",
+            "published_at": "string — ISO 8601 date",
+            "language": "string — ISO 639-1",
+            "schema_type": "string — Schema.org @type",
+            "discovery_source": "string — how discovered",
+            "freshness_score": "float  — 0.0–1.0",
+            "domain_authority": "float  — 0.0–1.0",
+            "word_count": "int    — non-stopword count",
+            "crawled_at": "float  — Unix timestamp",
+            "indexed_at": "float  — Unix timestamp",
+            "content_hash": "string — FNV-64a hex",
+            "has_embedding": "bool   — always true for points in Qdrant"
+        }
+    },
+    "_search_example": {
+        "description": "ANN search with payload filter",
+        "query_vector": "[0.08, -0.12, ...]  (384 floats from embed_query())",
+        "filter": {
+            "must": [
+                {
+                    "key": "language",
+                    "match": {
+                        "value": "en"
+                    }
+                },
+                {
+                    "key": "domain_authority",
+                    "range": {
+                        "gte": 0.3
+                    }
+                }
+            ]
+        },
+        "limit": 50,
+        "with_payload": true
+    }
+}
