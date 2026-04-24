@@ -1,0 +1,17 @@
+# Indexer Service Dependencies
+# Install: pip install -r requirements.txt
+
+# ── Meilisearch ───────────────────────────────────────────────────────────────
+meilisearch==0.31.0            # official Python SDK
+
+# ── Qdrant ────────────────────────────────────────────────────────────────────
+qdrant-client==1.9.1           # official async Python SDK (gRPC + REST)
+
+# ── PostgreSQL (async) ────────────────────────────────────────────────────────
+asyncpg==0.29.0                # fastest async PostgreSQL driver
+
+# ── Redis ─────────────────────────────────────────────────────────────────────
+redis[hiredis]==5.0.4          # async client with fast C parser
+
+# ── Monitoring ────────────────────────────────────────────────────────────────
+prometheus-client==0.20.0
