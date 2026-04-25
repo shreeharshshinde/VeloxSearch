@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Web Indexing — Live Demo | PRN-22510103</title>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d2e;
+            --card: #22263a;
+            --border: #2e3250;
+            --text: #e2e8f0;
+            --muted: #64748b;
+            --green: #22c55e;
+            --blue: #3b82f6;
+            --amber: #f59e0b;
+            --red: #ef4444;
+            --purple: #a855f7;
+            --font: 'SF Mono', 'Fira Code', monospace;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 13px;
+            min-height: 100vh;
+            padding: 1.5rem;
+        }
+
+        h1 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .sub {
+            color: var(--muted);
+            font-size: 11px;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .full {
+            grid-column: 1 / -1;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+
+        .card-title {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 0.75rem;
+        }
+
+        /* KPI row */
+        .kpis {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .kpi {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+        }
+
+        .kpi-val {
+            font-size: 1.6rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .kpi-label {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
+
+        /* SLO gauge */
+        .slo-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: var(--border);
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .slo-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: var(--green);
+            transition: width 0.5s ease;
+        }
+
+        /* Submit form */
+        .submit-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 0.75rem;
+        }
+
+        input[type=text] {
+            flex: 1;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none;
+        }
+
+        input[type=text]:focus {
+            border-color: var(--blue);
+        }
+
+        button {
+            background: var(--blue);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            padding: 8px 16px;
+            font-family: var(--font);
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: opacity 0.15s;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Search results */
+        .search-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 0.75rem;
+        }
+
+        .result-item {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-title {
+            color: var(--blue);
+            margin-bottom: 2px;
+            font-size: 12px;
+        }
+
+        .result-meta {
+            color: var(--muted);
+            font-size: 10px;
+        }
+
+        .result-score {
+            float: right;
+            color: var(--amber);
+        }
+
+        /* Pipeline feed */
+        #feed {
+            height: 260px;
+            overflow-y: auto;
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        #feed::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #feed::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        .ev {
+            display: flex;
+            gap: 8px;
+            align-items: baseline;
+        }
+
+        .ev-time {
+            color: var(--muted);
+            flex-shrink: 0;
+            width: 56px;
+        }
+
+        .ev-badge {
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 700;
+            flex-shrink: 0;
+            width: 76px;
+            text-align: center;
+        }
+
+        .badge-indexed {
+            background: #14532d;
+            color: var(--green);
+        }
+
+        .badge-crawl {
+            background: #1e3a5f;
+            color: var(--blue);
+        }
+
+        .badge-blocked {
+            background: #3b0764;
+            color: var(--purple);
+        }
+
+        .badge-stats {
+            background: #1c1917;
+            color: var(--muted);
+        }
+
+        .badge-connect {
+            background: #1c1917;
+            color: var(--amber);
+        }
+
+        .ev-url {
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .slo-ok {
+            color: var(--green);
+        }
+
+        .slo-bad {
+            color: var(--red);
+        }
+
+        /* Latency histogram */
+        .hist {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 60px;
+            margin-top: 8px;
+        }
+
+        .hist-bar {
+            flex: 1;
+            background: var(--blue);
+            border-radius: 2px 2px 0 0;
+            min-height: 2px;
+            transition: height 0.4s ease;
+        }
+
+        .hist-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        /* Connection status */
+        .conn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--muted);
+        }
+
+        .dot.live {
+            background: var(--green);
+            box-shadow: 0 0 5px var(--green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.4
+            }
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 600;
+            margin-left: 4px;
+        }
+
+        .tag-en {
+            background: #1e3a5f;
+            color: #93c5fd;
+        }
+
+        .tag-slo {
+            background: #14532d;
+            color: #86efac;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>⚡ Real-Time Web Indexing System</h1>
+    <p class="sub">PRN-22510103 &nbsp;·&nbsp; Target: index new pages in &lt; 60 seconds &nbsp;·&nbsp;
+        <span class="conn"><span class="dot" id="dot"></span><span id="conn-label">Connecting…</span></span>
+    </p>
+
+    <!-- KPIs -->
+    <div class="kpis">
+        <div class="kpi">
+            <div class="kpi-val" id="kpi-indexed" style="color:#22c55e">0</div>
+            <div class="kpi-label">Indexed / min</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-val" id="kpi-queue" style="color:#f59e0b">0</div>
+            <div class="kpi-label">Queue depth</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-val" id="kpi-slo" style="color:#22c55e">—</div>
+            <div class="kpi-label">SLO pass rate</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-val" id="kpi-p95" style="color:#3b82f6">—</div>
+            <div class="kpi-label">P95 latency</div>
+        </div>
+    </div>
+
+    <div class="grid">
+
+        <!-- Submit URL -->
+        <div class="card">
+            <div class="card-title">🚀 Submit URL for Indexing</div>
+            <div class="submit-row">
+                <input type="text" id="url-input" placeholder="https://en.wikipedia.org/wiki/Web_indexing" />
+                <button id="submit-btn" onclick="submitURL()">Index Now</button>
+            </div>
+            <div id="submit-status" style="font-size:11px;color:var(--muted)">
+                Enter a URL and click "Index Now" — watch it appear in the feed below and become searchable within 60s.
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="card">
+            <div class="card-title">🔍 Search the Index</div>
+            <div class="search-row">
+                <input type="text" id="search-input" placeholder="machine learning transformers" />
+                <button onclick="runSearch()">Search</button>
+            </div>
+            <div id="search-results" style="max-height:120px;overflow-y:auto;font-size:11px">
+                <span style="color:var(--muted)">Results will appear here…</span>
+            </div>
+        </div>
+
+        <!-- SLO Panel -->
+        <div class="card">
+            <div class="card-title">📊 60-Second SLO</div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+                <span>% indexed within 60s</span>
+                <span id="slo-pct" style="color:var(--green);font-weight:700">—</span>
+            </div>
+            <div class="slo-bar">
+                <div class="slo-fill" id="slo-bar" style="width:0%"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:8px">
+                <span>P50: <span id="p50">—</span></span>
+                <span>P95: <span id="p95">—</span></span>
+                <span>Total: <span id="total-hour">—</span>/hr</span>
+            </div>
+            <div style="margin-top:12px">
+                <div class="card-title" style="margin-bottom:4px">Latency distribution</div>
+                <div class="hist" id="histogram">
+                    <div class="hist-bar" style="height:10%"></div>
+                    <div class="hist-bar" style="height:20%"></div>
+                    <div class="hist-bar" style="height:50%"></div>
+                    <div class="hist-bar" style="height:80%"></div>
+                    <div class="hist-bar" style="height:60%"></div>
+                    <div class="hist-bar" style="height:30%"></div>
+                    <div class="hist-bar" style="height:10%"></div>
+                </div>
+                <div class="hist-labels">
+                    <span>0s</span><span>10s</span><span>20s</span><span>30s</span><span>45s</span><span>60s</span><span>90s</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live pipeline feed -->
+        <div class="card">
+            <div class="card-title">📡 Live Pipeline Feed</div>
+            <div id="feed"></div>
+        </div>
+
+    </div>
+
+    <script>
+        const API = 'http://localhost:8000';
+        const WS = 'ws://localhost:8000/ws/feed';
+        let ws, reconnectTimer;
+        let indexedPerMin = 0, indexedWindow = [];
+
+        // ── WebSocket ──────────────────────────────────────────────────────────────
+        function connect() {
+            ws = new WebSocket(WS);
+
+            ws.onopen = () => {
+                setConn(true);
+                clearTimeout(reconnectTimer);
+            };
+
+            ws.onmessage = (e) => {
+                const ev = JSON.parse(e.data);
+                handleEvent(ev);
+            };
+
+            ws.onclose = () => {
+                setConn(false);
+                reconnectTimer = setTimeout(connect, 3000);
+            };
+
+            ws.onerror = () => ws.close();
+        }
+
+        function setConn(live) {
+            document.getElementById('dot').className = 'dot' + (live ? ' live' : '');
+            document.getElementById('conn-label').textContent = live ? 'Live' : 'Reconnecting…';
+        }
+
+        // ── Event handler ──────────────────────────────────────────────────────────
+        function handleEvent(ev) {
+            const time = new Date(ev.timestamp || Date.now()).toLocaleTimeString('en', { hour12: false });
+
+            if (ev.type === 'indexed') {
+                const ms = ev.latency_ms || 0;
+                const slo = ms <= 60000;
+                const msStr = ms >= 1000 ? (ms / 1000).toFixed(1) + 's' : ms + 'ms';
+                addFeedLine(time, 'indexed',
+                    `${trimURL(ev.url)} <span class="${slo ? 'slo-ok' : 'slo-bad'}">${msStr}</span>
+       <span class="tag tag-en">${ev.language || '?'}</span>
+       ${slo ? '<span class="tag tag-slo">SLO ✓</span>' : ''}`,
+                    'badge-indexed');
+
+                // Track throughput
+                indexedWindow.push(Date.now());
+                indexedWindow = indexedWindow.filter(t => t > Date.now() - 60000);
+                document.getElementById('kpi-indexed').textContent = indexedWindow.length;
+
+            } else if (ev.type === 'crawl_complete') {
+                addFeedLine(time, 'crawled',
+                    `${trimURL(ev.url)} — ${ev.fetch_ms}ms · ${fmtBytes(ev.bytes)}`,
+                    'badge-crawl');
+
+            } else if (ev.type === 'robots_blocked') {
+                addFeedLine(time, 'blocked', trimURL(ev.url), 'badge-blocked');
+
+            } else if (ev.type === 'stats') {
+                document.getElementById('kpi-queue').textContent = ev.queue_depth || 0;
+            }
+        }
+
+        function addFeedLine(time, label, html, badgeClass) {
+            const feed = document.getElementById('feed');
+            const div = document.createElement('div');
+            div.className = 'ev';
+            div.innerHTML = `
+    <span class="ev-time">${time}</span>
+    <span class="ev-badge ${badgeClass}">${label.toUpperCase()}</span>
+    <span class="ev-url">${html}</span>`;
+            feed.prepend(div);
+            // Keep last 200 lines
+            while (feed.children.length > 200) feed.removeChild(feed.lastChild);
+        }
+
+        function trimURL(url) {
+            try { const u = new URL(url); return u.hostname + u.pathname.slice(0, 40); }
+            catch { return (url || '').slice(0, 50); }
+        }
+
+        function fmtBytes(b) {
+            if (!b) return ''; if (b < 1024) return b + 'B';
+            return (b / 1024).toFixed(1) + 'KB';
+        }
+
+        // ── Stats polling ──────────────────────────────────────────────────────────
+        async function pollStats() {
+            try {
+                const r = await fetch(`${API}/api/v1/stats`);
+                if (!r.ok) return;
+                const s = await r.json();
+                document.getElementById('kpi-slo').textContent =
+                    s.slo_pass_rate_pct ? s.slo_pass_rate_pct.toFixed(1) + '%' : '—';
+                document.getElementById('kpi-p95').textContent =
+                    s.p95_latency_ms ? (s.p95_latency_ms / 1000).toFixed(1) + 's' : '—';
+                document.getElementById('slo-pct').textContent =
+                    s.slo_pass_rate_pct ? s.slo_pass_rate_pct.toFixed(1) + '%' : '—';
+                document.getElementById('slo-bar').style.width =
+                    (s.slo_pass_rate_pct || 0) + '%';
+                const barColor = (s.slo_pass_rate_pct || 0) >= 95 ? '#22c55e' : '#ef4444';
+                document.getElementById('slo-bar').style.background = barColor;
+                document.getElementById('kpi-slo').style.color = barColor;
+                document.getElementById('p50').textContent =
+                    s.p50_latency_ms ? (s.p50_latency_ms / 1000).toFixed(1) + 's' : '—';
+                document.getElementById('p95').textContent =
+                    s.p95_latency_ms ? (s.p95_latency_ms / 1000).toFixed(1) + 's' : '—';
+                document.getElementById('total-hour').textContent = s.urls_indexed_last_hour || 0;
+                document.getElementById('kpi-queue').textContent = s.queue_depth || 0;
+            } catch { }
+        }
+
+        // ── URL submission ─────────────────────────────────────────────────────────
+        async function submitURL() {
+            const url = document.getElementById('url-input').value.trim();
+            if (!url) return;
+            const btn = document.getElementById('submit-btn');
+            const st = document.getElementById('submit-status');
+            btn.disabled = true;
+            st.textContent = '⏳ Submitting…';
+            st.style.color = 'var(--amber)';
+            try {
+                const r = await fetch(`${API}/api/v1/urls/submit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, priority: 'high' }),
+                });
+                const d = await r.json();
+                if (r.ok) {
+                    st.textContent = `✓ Queued — task: ${d.task_id} · ETA: ${d.estimated_index_time}`;
+                    st.style.color = 'var(--green)';
+                } else {
+                    st.textContent = `✗ Error: ${d.detail || 'unknown'}`;
+                    st.style.color = 'var(--red)';
+                }
+            } catch (e) {
+                st.textContent = `✗ ${e.message}`;
+                st.style.color = 'var(--red)';
+            }
+            setTimeout(() => { btn.disabled = false; }, 3000);
+        }
+
+        // ── Search ─────────────────────────────────────────────────────────────────
+        async function runSearch() {
+            const q = document.getElementById('search-input').value.trim();
+            if (!q) return;
+            const box = document.getElementById('search-results');
+            box.innerHTML = '<span style="color:var(--muted)">Searching…</span>';
+            try {
+                const r = await fetch(`${API}/api/v1/search?q=${encodeURIComponent(q)}&limit=5`);
+                const d = await r.json();
+                if (!d.results || !d.results.length) {
+                    box.innerHTML = '<span style="color:var(--muted)">No results yet — the URL may still be indexing.</span>';
+                    return;
+                }
+                box.innerHTML = d.results.map(res => `
+      <div class="result-item">
+        <div class="result-title">
+          <span class="result-score">${(res.score * 100).toFixed(0)}%</span>
+          <a href="${res.url}" target="_blank" style="color:var(--blue);text-decoration:none">${res.title || res.url}</a>
+        </div>
+        <div class="result-meta">${res.domain} · ${res.language}
+          ${res.published_at ? '· ' + res.published_at.slice(0, 10) : ''}</div>
+      </div>`).join('') +
+                    `<div style="color:var(--muted);font-size:10px;margin-top:6px">${d.total} total · ${d.took_ms}ms · ${d.mode} mode · freshness: ${d.index_freshness.slice(0, 19)}</div>`;
+            } catch (e) {
+                box.innerHTML = `<span style="color:var(--red)">Error: ${e.message}</span>`;
+            }
+        }
+
+        // ── Keyboard shortcuts ─────────────────────────────────────────────────────
+        document.getElementById('url-input').addEventListener('keydown',
+            e => { if (e.key === 'Enter') submitURL(); });
+        document.getElementById('search-input').addEventListener('keydown',
+            e => { if (e.key === 'Enter') runSearch(); });
+
+        // ── Boot ───────────────────────────────────────────────────────────────────
+        connect();
+        pollStats();
+        setInterval(pollStats, 10_000);
+    </script>
+</body>
+
+</html>
