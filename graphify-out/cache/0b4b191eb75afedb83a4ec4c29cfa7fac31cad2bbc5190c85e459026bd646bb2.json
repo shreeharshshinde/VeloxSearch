@@ -1,1 +1,0 @@
-{"nodes": [{"id": "services_indexer_writers_qdrant_writer_py", "label": "qdrant_writer.py", "file_type": "code", "source_file": "services/indexer/writers/qdrant_writer.py", "source_location": "L1"}], "edges": [], "raw_calls": []}
